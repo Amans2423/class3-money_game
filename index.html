@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Money Adventure — Cartoon Money Game (v2)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --card:#fffefc;
+    --accent:#f6d365;
+    --accent2:#fda085;
+  }
+  body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:linear-gradient(180deg,#fff9e6 0%,#f0fbff 100%); min-height:100vh;}
+  .rounded-xxl{border-radius:1rem;}
+  .coin{width:56px;height:56px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 6px #00000010;cursor:pointer}
+  .floating{animation:floaty 4s ease-in-out infinite}
+  @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+  .dropzone{min-height:120px;border:3px dashed #f3f4f6;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;padding:12px;background:linear-gradient(180deg,#fff,#fffdfa)}
+  .shadow-soft{box-shadow:0 8px 30px rgba(2,6,23,0.08)}
+  .small-btn{padding:.4rem .9rem;border-radius:.6rem;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#2b2b2b;font-weight:700}
+  .badge{background:#fff8ed;border-radius:999px;padding:.25rem .6rem;font-weight:700}
+  .fallIn{animation:fallIn .6s ease forwards}
+  @keyframes fallIn{0%{transform:translateY(-120px) scale(.9);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+</style>
+</head>
+<body class="p-6">
+<div class="max-w-5xl mx-auto">
+
+<header class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-4">
+    <div class="w-16 h-16 rounded-full bg-yellow-300 flex items-center justify-center text-3xl shadow-soft">🪙</div>
+    <div>
+      <h1 class="text-2xl font-extrabold">Money Adventure</h1>
+      <p class="text-sm text-gray-600">Learn rupees & paise with fun cartoon levels</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="text-right">
+      <div class="text-xs text-gray-500">Stars</div>
+      <div id="starCount" class="text-lg font-bold">0 ⭐</div>
+    </div>
+    <button id="openHelp" class="small-btn">How to Play</button>
+  </div>
+</header>
+
+<main id="mainArea" class="bg-white rounded-xxl p-6 shadow-soft">
+
+  <!-- Level Select -->
+  <section id="levelSelect" class="text-center space-y-4">
+    <h2 class="text-xl font-bold">Choose a Level</h2>
+    <p class="text-sm text-gray-600">Learn, play and unlock fun money challenges.</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+      <button class="p-4 rounded-2xl bg-yellow-200 shadow-soft" onclick="startLevel(1)">
+        <div class="text-4xl">🪙</div>
+        <div class="font-bold mt-2">Level 1<br><span class="text-sm">Identify Money</span></div>
+      </button>
+      <button class="p-4 rounded-2xl bg-green-200 shadow-soft" onclick="startLevel(2)">
+        <div class="text-4xl">🧮</div>
+        <div class="font-bold mt-2">Level 2<br><span class="text-sm">Add Money (Drag)</span></div>
+      </button>
+      <button class="p-4 rounded-2xl bg-blue-200 shadow-soft" onclick="startLevel(3)">
+        <div class="text-4xl">🏪</div>
+        <div class="font-bold mt-2">Level 3<br><span class="text-sm">Shopkeeper</span></div>
+      </button>
+      <button class="p-4 rounded-2xl bg-pink-200 shadow-soft" onclick="startLevel(4)">
+        <div class="text-4xl">⚡</div>
+        <div class="font-bold mt-2">Level 4<br><span class="text-sm">Speed Round</span></div>
+      </button>
+    </div>
+  </section>
+
+  <!-- Game Container -->
+  <section id="gameContainer" class="hidden mt-6">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <button class="small-btn" onclick="backToMenu()">⬅ Back</button>
+        <div id="levelBadge" class="badge">Level</div>
+      </div>
+      <div class="text-right">
+        <div class="text-xs text-gray-500">Score</div>
+        <div id="scoreDisplay" class="text-lg font-bold">0</div>
+      </div>
+    </div>
+    <div id="levelContent" class="min-h-[320px]"></div>
+  </section>
+
+</main>
+
+<footer class="mt-6 text-sm text-gray-600 text-center">Made with ❤️ for Class 3 — Learn Money Concepts</footer>
+</div>
+
+<!-- Help Modal -->
+<div id="helpModal" class="fixed inset-0 hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-white p-6 rounded-2xl max-w-xl w-full shadow-lg">
+    <h3 class="text-xl font-bold mb-2">Quick Instructions</h3>
+    <ul class="list-disc pl-5 space-y-1 text-sm text-gray-700">
+      <li>Level 1: Choose the correct coin or note.</li>
+      <li>Level 2: Drag coins to basket; match the target. Remove if extra!</li>
+      <li>Level 3: Buy items; pay correctly or find change.</li>
+      <li>Level 4: Answer fast before time ends!</li>
+    </ul>
+    <div class="mt-4 text-right">
+      <button class="small-btn" onclick="closeHelp()">Got it!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sounds -->
+<audio id="snd-correct" src="https://cdn.pixabay.com/audio/2021/08/04/audio_b2f7ed5b3d.mp3"></audio>
+<audio id="snd-wrong" src="https://cdn.pixabay.com/audio/2022/03/15/audio_d7f5f9e5ef.mp3"></audio>
+<audio id="snd-coin" src="https://cdn.pixabay.com/audio/2021/08/04/audio_8b4b2b2f3b.mp3"></audio>
+<audio id="snd-win" src="https://cdn.pixabay.com/audio/2023/03/19/audio_3e0b7b1f1c.mp3"></audio>
+
+<script>
+const LEVELS={1:{title:'Identify Money'},2:{title:'Add Money'},3:{title:'Shopkeeper'},4:{title:'Speed Round'}};
+let globalScore=0,stars=0,currentLevel=1;
+
+const L1=[
+  {q:'Which is ₹10 coin?',choices:['₹2','₹5','₹10','₹20'],a:'₹10'},
+  {q:'Click the note of ₹20',choices:['₹10','₹20','₹50','₹100'],a:'₹20'},
+  {q:'Which has more value?',choices:['₹2','₹5','₹1','50p'],a:'₹5'},
+  {q:'How many ₹1 coins make ₹5?',choices:['2','3','5','10'],a:'5'},
+  {q:'Which is smallest?',choices:['₹2','₹1','₹5','₹10'],a:'₹1'}
+];
+
+const shopItems=[
+  {name:'Eraser',price:5,emoji:'🧽'},
+  {name:'Pencil',price:8,emoji:'✏️'},
+  {name:'Notebook',price:20,emoji:'📒'},
+  {name:'Toy',price:35,emoji:'🚗'}
+];
+const speedQ=[
+  {q:'1 Rupee = ___ Paise',choices:['10','100','50'],a:'100'},
+  {q:'₹10 + ₹5 = ?',choices:['₹12','₹15','₹20'],a:'₹15'},
+  {q:'If you pay ₹20 for ₹15, change = ?',choices:['₹5','₹10','₹3'],a:'₹5'},
+  {q:'₹50 - ₹20 = ?',choices:['₹20','₹25','₹30'],a:'₹30'}
+];
+
+document.getElementById('openHelp').onclick=()=>document.getElementById('helpModal').classList.remove('hidden');
+function closeHelp(){document.getElementById('helpModal').classList.add('hidden');}
+
+function play(s){try{document.getElementById('snd-'+s).currentTime=0;document.getElementById('snd-'+s).play();}catch(e){}}
+function backToMenu(){document.getElementById('gameContainer').classList.add('hidden');document.getElementById('levelSelect').classList.remove('hidden');}
+
+function startLevel(n){
+ currentLevel=n;
+ document.getElementById('levelSelect').classList.add('hidden');
+ document.getElementById('gameContainer').classList.remove('hidden');
+ document.getElementById('levelBadge').textContent=`Level ${n} • ${LEVELS[n].title}`;
+ document.getElementById('scoreDisplay').textContent=globalScore;
+ if(n===1)loadL1(); if(n===2)loadL2(); if(n===3)loadL3(); if(n===4)loadL4();
+}
+
+/* ---------- Level 1 ---------- */
+let l1i=0;
+function loadL1(){l1i=0;renderL1();}
+function renderL1(){
+ const q=L1[l1i];const c=document.getElementById('levelContent');
+ c.innerHTML=`<div class='p-4 bg-white rounded-xl shadow'>
+ <div class='text-lg font-bold mb-2'>${q.q}</div>
+ <div id='opts' class='grid grid-cols-2 gap-3'></div>
+ <div id='msg' class='mt-3'></div></div>`;
+ const o=document.getElementById('opts');
+ q.choices.forEach(x=>{
+   const b=document.createElement('button');b.className='p-3 rounded-lg bg-gray-50';
+   b.textContent=x;
+   b.onclick=()=>{
+     if(x===q.a){play('correct');globalScore+=10;showMsg('✅ Correct +10',true);}
+     else{play('wrong');showMsg(`❌ Wrong (₹${q.a})`,false);}
+     setTimeout(()=>{
+       l1i++;
+       if(l1i<L1.length)renderL1();else endLevel(1);
+     },800);
+   };
+   o.appendChild(b);
+ });
+}
+function showMsg(m,ok){document.getElementById('msg').innerHTML=`<div class='p-2 rounded ${ok?'bg-green-50':'bg-red-50'}'>${m}</div>`;document.getElementById('scoreDisplay').textContent=globalScore;}
+
+/* ---------- Level 2 ---------- */
+function loadL2(){
+ const target=[7,9,12,15,18,22,25,30][Math.floor(Math.random()*8)];
+ const c=document.getElementById('levelContent');
+ c.innerHTML=`<div class='p-4 bg-white rounded-xl shadow'>
+ <div class='text-lg font-bold mb-2'>Make ₹${target} by dragging coins</div>
+ <div class='grid grid-cols-1 md:grid-cols-3 gap-4'>
+   <div class='col-span-2 flex flex-wrap gap-3' id='coins'></div>
+   <div>
+     <div class='dropzone' id='basket'>Drop coins here</div>
+     <div class='mt-3 text-sm'>Current: <span id='total'>₹0</span></div>
+     <div class='mt-3 flex gap-2'>
+       <button class='small-btn' onclick='submitBasket(${target})'>Submit</button>
+       <button class='small-btn' onclick='clearBasket()'>🗑 Remove</button>
+     </div>
+   </div>
+ </div>
+ <div id='msg2' class='mt-3'></div></div>`;
+ const vals=[1,2,5,10,20];
+ const area=document.getElementById('coins');
+ for(let i=0;i<10;i++){const v=vals[Math.floor(Math.random()*vals.length)];
+   const el=document.createElement('div');
+   el.className='coin bg-yellow-100 floating';
+   el.textContent='₹'+v;el.draggable=true;el.dataset.value=v;
+   el.ondragstart=e=>e.dataTransfer.setData('text/plain',v);
+   area.appendChild(el);
+ }
+ const basket=document.getElementById('basket');
+ basket._total=0;basket._items=[];
+ basket.ondragover=e=>{e.preventDefault();basket.style.borderColor='#60a5fa';};
+ basket.ondragleave=()=>basket.style.borderColor='';
+ basket.ondrop=e=>{
+   e.preventDefault();basket.style.borderColor='';
+   const v=parseInt(e.dataTransfer.getData('text/plain'),10);
+   basket._items.push(v);basket._total+=v;
+   document.getElementById('total').textContent='₹'+basket._total;
+   play('coin');
+ };
+ window._b=basket;
+}
+function clearBasket(){const b=window._b;b._items=[];b._total=0;document.getElementById('total').textContent='₹0';play('coin');}
+function submitBasket(t){
+ const b=window._b;const msg=document.getElementById('msg2');
+ if(b._total===t){play('correct');globalScore+=20;msg.innerHTML=`<div class='p-2 bg-green-50'>Perfect! +20</div>`;endLevel(2,true);}
+ else{play('wrong');msg.innerHTML=`<div class='p-2 bg-red-50'>You made ₹${b._total}. Try again.</div>`;}
+ document.getElementById('scoreDisplay').textContent=globalScore;
+}
+
+/* ---------- Level 3 ---------- */
+function loadL3(){
+ const c=document.getElementById('levelContent');
+ const items=shopItems.map((it,i)=>`
+   <div class='p-3 rounded bg-gray-50 flex items-center justify-between'>
+   <div><div class='text-xl'>${it.emoji}</div><div>${it.name}</div></div>
+   <div class='text-right'><div class='font-bold'>₹${it.price}</div>
+   <button class='small-btn mt-1' onclick='buy(${i})'>Buy</button></div></div>`).join('');
+ c.innerHTML=`<div class='p-4 bg-white rounded-xl shadow'><div class='text-lg font-bold mb-2'>Buy any item</div>${items}<div id='msg3' class='mt-3'></div></div>`;
+}
+function buy(i){
+ const it=shopItems[i];const pay=[it.price,it.price+5,it.price+10];
+ const c=document.getElementById('levelContent');
+ c.innerHTML=`<div class='p-4 bg-white rounded-xl shadow'>
+ <div class='font-bold mb-2'>${it.emoji} ${it.name} • ₹${it.price}</div>
+ <div class='grid grid-cols-3 gap-3' id='pays'></div><div id='msg3' class='mt-3'></div></div>`;
+ const area=document.getElementById('pays');
+ pay.forEach(v=>{
+   const b=document.createElement('button');
+   b.className='p-3 bg-yellow-50 rounded-lg';b.textContent='₹'+v;
+   b.onclick=()=>{if(v>=it.price){play('correct');globalScore+=10;showMsg3(`Paid ₹${v}, change ₹${v-it.price}`,true);endLevel(3,true);}else{play('wrong');showMsg3('Not enough!',false);}};
+   area.appendChild(b);
+ });
+}
+function showMsg3(m,ok){document.getElementById('msg3').innerHTML=`<div class='p-2 ${ok?'bg-green-50':'bg-red-50'}'>${m}</div>`;document.getElementById('scoreDisplay').textContent=globalScore;}
+
+/* ---------- Level 4 ---------- */
+let si=0;
+function loadL4(){si=0;renderSpeed();}
+function renderSpeed(){
+ if(si>=speedQ.length){endLevel(4,true);return;}
+ const q=speedQ[si];const c=document.getElementById('levelContent');
+ c.innerHTML=`<div class='p-4 bg-white rounded-xl shadow'>
+ <div class='flex justify-between'><div class='font-bold'>${q.q}</div><div>Time: <span id='t'>10</span></div></div>
+ <div id='so' class='grid grid-cols-2 gap-3 mt-3'></div></div>`;
+ const o=document.getElementById('so');q.choices.forEach(ch=>{
+   const b=document.createElement('button');
+   b.className='p-3 bg-gray-50 rounded-lg';b.textContent=ch;b.onclick=()=>checkSpeed(ch===q.a);
+   o.appendChild(b);
+ });
+ let t=10;const timer=setInterval(()=>{t--;document.getElementById('t').textContent=t;if(t<=0){clearInterval(timer);checkSpeed(false);}},1000);
+ window._speedTimer=timer;
+}
+function checkSpeed(ok){clearInterval(window._speedTimer);if(ok){globalScore+=10;play('correct');}else play('wrong');si++;document.getElementById('scoreDisplay').textContent=globalScore;setTimeout(renderSpeed,700);}
+
+/* ---------- Common end ---------- */
+function endLevel(n,success){
+ play('win');stars++;document.getElementById('starCount').textContent=stars+' ⭐';
+ const c=document.getElementById('levelContent');
+ c.innerHTML=`<div class='text-center p-6'>
+ <div class='text-5xl mb-2'>🎉</div>
+ <div class='font-bold text-lg mb-3'>Level ${n} Complete!</div>
+ <div class='mb-4'>Score: ${globalScore}</div>
+ <button class='small-btn' onclick='backToMenu()'>Menu</button>
+ ${n<4?`<button class='small-btn ml-3' onclick='startLevel(${n+1})'>Next Level ➡</button>`:''}
+ </div>`;
+}
+</script>
+</body>
+</html>
